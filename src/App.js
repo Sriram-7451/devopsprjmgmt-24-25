@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './screens/login';
 import UserRegister from './screens/user_register';
 import ForgotPassword from './screens/forgot_password';
+import Errorpage from './screens/error_page';
 
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/userRegister" element={<UserRegister />} />
           <Route path="/forgotPassword" element={<ForgotPassword />} />
+          <Route path="*" element={<Errorpage/>} />
         </Routes>
       </Router>
     </div>
