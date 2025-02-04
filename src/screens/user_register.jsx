@@ -1,52 +1,125 @@
-import { Button, Form, Input } from "antd";
+import React, { useState } from "react";
+import { Button, Form, Input, notification } from "antd";
 import { Link } from "react-router-dom";
-import "./user_register.css"
+import axios from "axios";
+import "./user_register.css";
 
-function UserRegister(){
-return(
+function UserRegister() {
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (values) => {
+    setLoading(true);
+
+    // Ensure the passwords match
+    if (values.password !== values.cpassword) {
+      notification.error({
+        message: "Password Mismatch",
+        description: "Passwords do not match, please try again.",
+        placement: "topRight",
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:5000/signup", {
+        firstname: values.firstname,
+        lastname: values.lastname,
+        email: values.email,
+        password: values.password,
+        cpassword: values.cpassword,
+      });
+
+      // Show a success notification
+      notification.success({
+        message: "Registration Successful",
+        description: "You have registered successfully!",
+        placement: "topRight",
+      });
+        
+      // Reset loading state after the request
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      notification.error({
+        message: "Registration Failed",
+        description: "Something went wrong. Please try again.",
+        placement: "topRight",
+      });
+      setLoading(false);
+    }
+  };
+
+  return (
     <div className="UserRegisterFormContainer">
-    <div style={{ height: "30vh" }}></div>
-    <Form>
-    <Form.Item
-            layout="vertical"
-            label={<span style={{ fontSize: "20px" }}>Username</span>}
+      <div style={{ height: "20vh" }}></div>
+      <Form onFinish={handleRegister}>
+        <Form.Item
+          layout="vertical"
+          label={<span style={{ fontSize: "20px" }}>First Name</span>}
+          name="firstname"
+          rules={[{ required: true, message: "Please enter your first name" }]}
         >
-            <Input
-                placeholder="Enter your Username"
-                size="large"
-            />
+          <Input placeholder="Enter your First Name" size="large" />
         </Form.Item>
         <div style={{ height: "40px" }} />
         <Form.Item
-            layout="vertical"
-            label={<span style={{ fontSize: "20px" }}>Email</span>}
+          layout="vertical"
+          label={<span style={{ fontSize: "20px" }}>Last Name</span>}
+          name="lastname"
+          rules={[{ required: true, message: "Please enter your last name" }]}
         >
-            <Input
-                placeholder="Enter your Email"
-                size="large"
-            />
+          <Input placeholder="Enter your Last Name" size="large" />
         </Form.Item>
         <div style={{ height: "40px" }} />
         <Form.Item
-            layout="vertical"
-            label={<span style={{ fontSize: "20px" }}>Password</span>}
+          layout="vertical"
+          label={<span style={{ fontSize: "20px" }}>Email</span>}
+          name="email"
+          rules={[
+            { required: true, message: "Please enter your email" },
+            { type: "email", message: "Please enter a valid email" },
+          ]}
         >
-            <Input.Password
-                placeholder="Enter your Password"
-                size="large"
-            />
+          <Input placeholder="Enter your Email" size="large" />
+        </Form.Item>
+        <div style={{ height: "40px" }} />
+        <Form.Item
+          layout="vertical"
+          label={<span style={{ fontSize: "20px" }}>Password</span>}
+          name="password"
+          rules={[{ required: true, message: "Please enter your password" }]}
+        >
+          <Input.Password placeholder="Enter your Password" size="large" />
+        </Form.Item>
+        <div style={{ height: "40px" }} />
+        <Form.Item
+          layout="vertical"
+          label={<span style={{ fontSize: "20px" }}>Confirm Password</span>}
+          name="cpassword"
+          rules={[{ required: true, message: "Please confirm your password" }]}
+        >
+          <Input.Password placeholder="Confirm your Password" size="large" />
         </Form.Item>
         <div style={{ height: "40px" }} />
         <Form.Item>
-            <Button color="default" variant="solid" style={{ width: "100%", height: "5vh" }} size="large">
-                Register
-            </Button>
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{ width: "100%", height: "5vh" }}
+            size="large"
+            loading={loading}
+          >
+            Register
+          </Button>
         </Form.Item>
         <div style={{ height: "5px" }} />
-        <span style={{ fontSize: "20px" }}>Already have an account? <Link to={"/"}>Log In!</Link></span>
-    </Form>
-</div>
-)
+        <span style={{ fontSize: "20px" }}>
+          Already have an account? <Link to={"/"}>Log In!</Link>
+        </span>
+      </Form>
+    </div>
+  );
 }
 
 export default UserRegister;

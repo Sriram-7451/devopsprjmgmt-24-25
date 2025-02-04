@@ -1,13 +1,52 @@
-import { Button, Form, Input } from "antd";
+import { Button, Form, Input, notification } from "antd";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import "./forgot_password.css"
 
 function ForgotPassword() {
+
+    const handleForgot = async (values) => {
+        console.log("values",values)
+
+        try {
+        const response = await axios.post('http://localhost:5000/forgotpassword', {
+            email: values.email,
+            password: values.password,
+            cpassword: values.cpassword
+        }, { withCredentials: true });
+
+        // Show success notification
+        notification.success({
+            message: 'Password Changed Successfully',
+            description: response.data.message,
+            placement: 'topRight',
+        });
+
+        // Redirect to home page after successful login
+        // window.location.reload();
+
+        } catch (error) {
+        console.error(error);
+
+        // Show error notification
+        notification.error({
+            message: 'Password Change Failed',
+            description: error.response?.data?.message || 'Something went wrong. Please try again.',
+            placement: 'topRight',
+        });
+        } finally {
+        // setLoading(false);
+        }
+    }
+
     return (
         <div className="ForgotPasswordFormContainer">
             <div style={{ height: "30vh" }}></div>
-            <Form>
+            <Form
+                onFinish={handleForgot}
+            >
                 <Form.Item
+                    name="email"
                     layout="vertical"
                     label={<span style={{ fontSize: "20px" }}>Enter your Email</span>}
                 >
@@ -18,6 +57,7 @@ function ForgotPassword() {
                 </Form.Item>
                 <div style={{ height: "40px" }} />
                 <Form.Item
+                    name="password"
                     layout="vertical"
                     label={<span style={{ fontSize: "20px" }}>Enter New Password</span>}
                 >
@@ -27,6 +67,7 @@ function ForgotPassword() {
                 </Form.Item>
                 <div style={{ height: "40px" }} />
                 <Form.Item
+                    name="cpassword"
                     layout="vertical"
                     label={<span style={{ fontSize: "20px" }}>Confirm New Password</span>}
                 >
@@ -36,7 +77,7 @@ function ForgotPassword() {
                 </Form.Item>
                 <div style={{ height: "40px" }} />
                 <Form.Item>
-                    <Button color="default" variant="solid" style={{ width: "100%", height: "5vh" }} size="large">
+                    <Button color="default" variant="solid" style={{ width: "100%", height: "5vh" }} size="large" htmlType="submit">
                         Change password
                     </Button>
                 </Form.Item>
