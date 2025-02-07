@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Button, Form, Input, notification } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./user_register.css";
 
 function UserRegister() {
   const [loading, setLoading] = useState(false);
+  const navigateTopage = useNavigate()
 
   const handleRegister = async (values) => {
     setLoading(true);
@@ -22,7 +23,7 @@ function UserRegister() {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/signup", {
+      const response = await axios.post(`http://localhost:${process.env.REACT_APP_ENV_PORT}/signup`, {
         firstname: values.firstname,
         lastname: values.lastname,
         email: values.email,
@@ -39,6 +40,7 @@ function UserRegister() {
         
       // Reset loading state after the request
       setLoading(false);
+      navigateTopage("/login")
     } catch (error) {
       console.error(error);
       notification.error({
@@ -59,6 +61,7 @@ function UserRegister() {
           label={<span style={{ fontSize: "20px" }}>First Name</span>}
           name="firstname"
           rules={[{ required: true, message: "Please enter your first name" }]}
+          style={{ marginBottom: "16px", minHeight: "64px" }}
         >
           <Input placeholder="Enter your First Name" size="large" />
         </Form.Item>
@@ -68,6 +71,7 @@ function UserRegister() {
           label={<span style={{ fontSize: "20px" }}>Last Name</span>}
           name="lastname"
           rules={[{ required: true, message: "Please enter your last name" }]}
+          style={{ marginBottom: "16px", minHeight: "64px" }}
         >
           <Input placeholder="Enter your Last Name" size="large" />
         </Form.Item>
@@ -80,6 +84,7 @@ function UserRegister() {
             { required: true, message: "Please enter your email" },
             { type: "email", message: "Please enter a valid email" },
           ]}
+          style={{ marginBottom: "16px", minHeight: "64px" }}
         >
           <Input placeholder="Enter your Email" size="large" />
         </Form.Item>
@@ -89,6 +94,7 @@ function UserRegister() {
           label={<span style={{ fontSize: "20px" }}>Password</span>}
           name="password"
           rules={[{ required: true, message: "Please enter your password" }]}
+          style={{ marginBottom: "16px", minHeight: "64px" }}
         >
           <Input.Password placeholder="Enter your Password" size="large" />
         </Form.Item>
@@ -98,6 +104,7 @@ function UserRegister() {
           label={<span style={{ fontSize: "20px" }}>Confirm Password</span>}
           name="cpassword"
           rules={[{ required: true, message: "Please confirm your password" }]}
+          style={{ marginBottom: "16px", minHeight: "64px" }}
         >
           <Input.Password placeholder="Confirm your Password" size="large" />
         </Form.Item>

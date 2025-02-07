@@ -1,15 +1,17 @@
 import { Button, Form, Input, notification } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./forgot_password.css"
 
 function ForgotPassword() {
 
+    const navigateToPage = useNavigate()
+
     const handleForgot = async (values) => {
         console.log("values",values)
 
         try {
-        const response = await axios.post('http://localhost:5000/forgotpassword', {
+        const response = await axios.post(`http://localhost:${process.env.REACT_APP_ENV_PORT}/forgotpassword`, {
             email: values.email,
             password: values.password,
             cpassword: values.cpassword
@@ -23,7 +25,7 @@ function ForgotPassword() {
         });
 
         // Redirect to home page after successful login
-        // window.location.reload();
+        navigateToPage("/login")
 
         } catch (error) {
         console.error(error);

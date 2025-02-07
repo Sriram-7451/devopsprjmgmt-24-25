@@ -1,44 +1,45 @@
 import React, { useState } from 'react';
 import { Button, Form, Input, notification } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import './login.css'
 
 function Login() {
 
+    const navigateToPage = useNavigate()
     const [loading, setLoading] = useState(false);
-    
+
     const handleLogin = async (values) => {
-        console.log("values",values)
+        console.log("values", values)
         setLoading(true);
 
         try {
-        const response = await axios.post('http://localhost:5000/login', {
-            email: values.email,
-            password: values.password,
-        }, { withCredentials: true });
+            const response = await axios.post(`http://localhost:${process.env.REACT_APP_ENV_PORT}/login`, {
+                email: values.email,
+                password: values.password,
+            }, { withCredentials: true });
 
-        // Show success notification
-        notification.success({
-            message: 'Login Successful',
-            description: response.data.message,
-            placement: 'topRight',
-        });
+            // Show success notification
+            notification.success({
+                message: 'Login Successful',
+                description: response.data.message,
+                placement: 'topRight',
+            });
 
-        // Redirect to home page after successful login
-        // window.location.reload();
+            // Redirect to Home page after successful login
+            navigateToPage("/homepage")
 
         } catch (error) {
-        console.error(error);
+            console.error(error);
 
-        // Show error notification
-        notification.error({
-            message: 'Login Failed',
-            description: error.response?.data?.message || 'Something went wrong. Please try again.',
-            placement: 'topRight',
-        });
+            // Show error notification
+            notification.error({
+                message: 'Login Failed',
+                description: error.response?.data?.message || 'Something went wrong. Please try again.',
+                placement: 'topRight',
+            });
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -46,7 +47,7 @@ function Login() {
         <div className="LoginFormContainer">
             <div style={{ height: "30vh" }}></div>
             <Form
-                onFinish={handleLogin} 
+                onFinish={handleLogin}
             >
                 <Form.Item
                     name="email"
@@ -56,6 +57,7 @@ function Login() {
                         { required: true, message: 'Please enter your email!' },
                         { type: 'email', message: 'Please enter a valid email!' },
                     ]}
+                    style={{ marginBottom: "16px", minHeight: "64px" }}
                 >
                     <Input
                         placeholder="Enter your Email"
@@ -70,10 +72,12 @@ function Login() {
                     rules={[
                         { required: true, message: 'Please enter your password!' },
                     ]}
+                    style={{ marginBottom: "16px", minHeight: "64px" }}
+
                 >
                     <Input.Password
                         placeholder="Enter your Password"
-                        size="large"                    
+                        size="large"
                     />
                 </Form.Item>
                 <div style={{ height: "20px" }} />
