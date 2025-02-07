@@ -14,7 +14,7 @@ function Login() {
         setLoading(true);
 
         try {
-            const response = await axios.post(`http://localhost:${process.env.REACT_APP_ENV_PORT}/login`, {
+            const response = await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/login`, {
                 email: values.email,
                 password: values.password,
             }, { withCredentials: true });

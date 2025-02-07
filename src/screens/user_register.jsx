@@ -23,7 +23,7 @@ function UserRegister() {
     }
 
     try {
-      const response = await axios.post(`http://localhost:${process.env.REACT_APP_ENV_PORT}/signup`, {
+      const response = await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/signup`, {
         firstname: values.firstname,
         lastname: values.lastname,
         email: values.email,

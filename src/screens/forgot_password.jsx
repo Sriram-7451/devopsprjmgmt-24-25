@@ -11,7 +11,7 @@ function ForgotPassword() {
         console.log("values",values)
 
         try {
-        const response = await axios.post(`http://localhost:${process.env.REACT_APP_ENV_PORT}/forgotpassword`, {
+        const response = await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/forgotpassword`, {
             email: values.email,
             password: values.password,
             cpassword: values.cpassword
