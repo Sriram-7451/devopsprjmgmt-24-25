@@ -64,7 +64,7 @@ function ForgotPassword() {
         }
 
         try {
-            const response = await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/admin/forgotpassword`, {
+            const response = await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/forgotpassword`, {
                 email: values.email,
                 password: values.password,
                 cpassword: values.cpassword,
@@ -134,7 +134,12 @@ function ForgotPassword() {
                             name="password"
                             layout="vertical"
                             label={<span style={{ fontSize: "20px" }}>Enter New Password</span>}
-                            rules={[{ required: true, message: "Please enter your new password!" }]}
+                            rules={[{ required: true, message: "Please enter your new password!" },
+                            {
+                                min: 7, // Ensures password is more than 6 characters
+                                message: 'Password must be more than 6 characters long!',
+                            }
+                            ]}
                         >
                             <Input.Password placeholder="Enter your New password" size="large" />
                         </Form.Item>
@@ -144,7 +149,12 @@ function ForgotPassword() {
                             name="cpassword"
                             layout="vertical"
                             label={<span style={{ fontSize: "20px" }}>Confirm New Password</span>}
-                            rules={[{ required: true, message: "Please confirm your new password!" }]}
+                            rules={[{ required: true, message: "Please confirm your new password!" },
+                            {
+                                min: 7, // Ensures password is more than 6 characters
+                                message: 'Password must be more than 6 characters long!',
+                            }
+                            ]}
                         >
                             <Input.Password placeholder="Enter your New password" size="large" />
                         </Form.Item>
@@ -185,7 +195,12 @@ function ForgotPassword() {
                             name="password"
                             layout="vertical"
                             label={<span style={{ fontSize: "20px" }}>Enter New Password</span>}
-                            rules={[{ required: true, message: "Please enter your new password!" }]}
+                            rules={[{ required: true, message: "Please enter your new password!" },
+                            {
+                                min: 7, // Ensures password is more than 6 characters
+                                message: 'Password must be more than 6 characters long!',
+                            }
+                            ]}
                         >
                             <Input.Password placeholder="Enter your New password" size="large" />
                         </Form.Item>
@@ -195,7 +210,12 @@ function ForgotPassword() {
                             name="cpassword"
                             layout="vertical"
                             label={<span style={{ fontSize: "20px" }}>Confirm New Password</span>}
-                            rules={[{ required: true, message: "Please confirm your new password!" }]}
+                            rules={[{ required: true, message: "Please confirm your new password!" },
+                            {
+                                min: 7, // Ensures password is more than 6 characters
+                                message: 'Password must be more than 6 characters long!',
+                            }
+                            ]}
                         >
                             <Input.Password placeholder="Enter your New password" size="large" />
                         </Form.Item>

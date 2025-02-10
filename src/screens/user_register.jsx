@@ -100,16 +100,16 @@ function UserRegister() {
 
   return (
     <div
-    style={{
-      backgroundImage: `url(${backgroundImage})`,
-      backgroundRepeat: "no-repeat",
-      backgroundSize: "cover",
-      height: "100vh",
-      width: "100%",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center"
-  }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        height: "100vh",
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+      }}
     >
       <div className="UserRegisterFormContainer">
         <Tabs
@@ -160,7 +160,10 @@ function UserRegister() {
               layout="vertical"
               label={<span style={{ fontSize: "20px" }}>Password</span>}
               name="password"
-              rules={[{ required: true, message: "Please enter your password" }]}
+              rules={[{ required: true, message: "Please enter your password" }, {
+                min: 7,
+                message: 'Password must be more than 6 characters long!',
+              }]}
               style={{ marginBottom: "16px", minHeight: "64px" }}
             >
               <Input.Password placeholder="Enter your Password" size="large" />
@@ -170,7 +173,12 @@ function UserRegister() {
               layout="vertical"
               label={<span style={{ fontSize: "20px" }}>Confirm Password</span>}
               name="cpassword"
-              rules={[{ required: true, message: "Please confirm your password" }]}
+              rules={[{ required: true, message: "Please confirm your password" },
+              {
+                min: 7, // Ensures password is more than 6 characters
+                message: 'Password must be more than 6 characters long!',
+              }
+              ]}
               style={{ marginBottom: "16px", minHeight: "64px" }}
             >
               <Input.Password placeholder="Confirm your Password" size="large" />
@@ -231,7 +239,12 @@ function UserRegister() {
               layout="vertical"
               label={<span style={{ fontSize: "20px" }}>Password</span>}
               name="password"
-              rules={[{ required: true, message: "Please enter your password" }]}
+              rules={[{ required: true, message: "Please enter your password" },
+                { 
+                  min: 7, // Ensures password is more than 6 characters
+                  message: 'Password must be more than 6 characters long!', 
+                }
+              ]}
               style={{ marginBottom: "16px", minHeight: "64px" }}
             >
               <Input.Password placeholder="Enter your Password" size="large" />
@@ -241,7 +254,12 @@ function UserRegister() {
               layout="vertical"
               label={<span style={{ fontSize: "20px" }}>Confirm Password</span>}
               name="cpassword"
-              rules={[{ required: true, message: "Please confirm your password" }]}
+              rules={[{ required: true, message: "Please confirm your password" },
+                { 
+                  min: 7, // Ensures password is more than 6 characters
+                  message: 'Password must be more than 6 characters long!', 
+                }
+              ]}
               style={{ marginBottom: "16px", minHeight: "64px" }}
             >
               <Input.Password placeholder="Confirm your Password" size="large" />
