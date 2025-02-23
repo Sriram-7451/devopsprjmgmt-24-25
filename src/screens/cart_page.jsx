@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layout, List, Button, Card, Typography, Image, Flex, Empty } from 'antd';
+import React, { useEffect } from 'react';
+import { Layout, List, Button, Card, Typography, Image, Flex, Empty, notification } from 'antd';
 import { Link } from 'react-router-dom';
 import useCartStore from '../store/store_cart_items';
 import {
@@ -8,12 +8,93 @@ import {
     ShoppingCartOutlined,
 } from '@ant-design/icons';
 import logoImage from "../assets/waLogo.jpeg";
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe('pk_test_51QvPj5H0mEi2gjEIoypsFkdjuyAAbdqpInM77jN9kftEhsHkNje7mBvPByYXkFrd3M4oQWKgq9EpmF2cshE158rS00x3z5Jf45');
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
 
 function CartPage() {
-    const { cart, removeFromCart, clearCart } = useCartStore();
+    const { cart, removeFromCart, clearCart, setCart } = useCartStore();
+
+    useEffect(() => {
+        const preservedCart = localStorage.getItem('preservedCart');
+        if (preservedCart) {
+            setCart(JSON.parse(preservedCart));
+            localStorage.removeItem('preservedCart');
+        }
+    }, [setCart]);
+
+    const handleCheckout = async () => {
+        // Preserve cart in localStorage before checkout
+        localStorage.setItem('preservedCart', JSON.stringify(cart));
+
+        try {
+            const stripe = await stripePromise;
+            localStorage.setItem('paymentStatus', 'pending');
+
+            // 1. Create line items array
+            const lineItems = cart.map((item, index) => ({
+                [`line_items[${index}][price_data][currency]`]: 'usd',
+                [`line_items[${index}][price_data][product_data][name]`]: item.name,
+                [`line_items[${index}][price_data][unit_amount]`]: Math.round(item.price * 100),
+                [`line_items[${index}][quantity]`]: item.quantity,
+            }));
+
+            const successURL = new URL(`${window.location.origin}/homepage`);
+            successURL.searchParams.set('fromStripe', 'true');
+
+            // 2. Create parameters
+            const params = Object.assign({}, ...lineItems, {
+                'payment_method_types[]': 'card',
+                mode: 'payment',
+                success_url: successURL.toString(),
+                cancel_url: `${window.location.origin}/cart`
+            });
+
+            // 3. Create URLSearchParams
+            const body = new URLSearchParams();
+            for (const [key, value] of Object.entries(params)) {
+                body.append(key, value);
+            }
+
+            // 4. Create Stripe session
+            const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer sk_test_51QvPj5H0mEi2gjEIOLyAFVYqZZMUXLPV1NB2PtrFYjME0aSryfnXFOqALvOIEyfYOzGtH7lmpl844Bpr2Mi6WFWw00RECeeunE`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Payment failed');
+            }
+
+            const session = await response.json();
+
+            // 5. Redirect to Stripe
+            const result = await stripe.redirectToCheckout({
+                sessionId: session.id
+            });
+
+            if (result.error) throw result.error;
+
+        } catch (err) {
+            // Restore cart on error
+            const savedCart = JSON.parse(localStorage.getItem('preservedCart') || '[]');
+            localStorage.removeItem('paymentStatus');
+            setCart(savedCart);
+            localStorage.removeItem('preservedCart');
+            notification.error({
+                message: 'Payment Error',
+                description: err.message
+            });
+        }
+    };
 
     return (
         <Layout>
@@ -71,7 +152,7 @@ function CartPage() {
                                 <Button type="primary" danger onClick={clearCart}>
                                     Remove All
                                 </Button>
-                                <Button type="primary" onClick={() => alert('Proceeding to payment...')}>
+                                <Button type="primary" onClick={handleCheckout}>
                                     Buy Now
                                 </Button>
                             </Flex>
@@ -79,10 +160,10 @@ function CartPage() {
                     </Flex>
 
                     {cart.length === 0 ? (
-                        <Flex 
-                            vertical 
-                            align="center" 
-                            justify="center" 
+                        <Flex
+                            vertical
+                            align="center"
+                            justify="center"
                             style={{ height: 'calc(100vh - 200px)' }}
                         >
                             <Empty
@@ -116,7 +197,7 @@ function CartPage() {
                                             />
                                             <div>
                                                 <Title level={5}>{item.name}</Title>
-                                                <p>{item.price}</p>
+                                                <p>${item.price.toFixed(2)}</p>
                                                 <p>Quantity: {item.quantity}</p>
                                             </div>
                                         </Flex>

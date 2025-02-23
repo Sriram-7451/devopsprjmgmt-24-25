@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layout, Card, Row, Col, Button, Image, Flex } from 'antd';
+import React, {useEffect, useState} from 'react';
+import { Layout, Card, Row, Col, Button, Image, Flex, notification } from 'antd';
 import { Link } from 'react-router-dom';
 import {
     HomeOutlined,
@@ -24,7 +24,7 @@ const products = [
         description: 'A suspended dark ride through a decaying Victorian mansion inhabited by spectral figures. Riders navigate secret passages and encounter floating furniture, whispering portraits, and sudden drops into shadowy realms.',
         image: darkWood,
         tagline: "Where the walls have eyes... and teeth!",
-        price: '$19.99',
+        price: 19.99,
     },
     {
         id: 2,
@@ -32,7 +32,7 @@ const products = [
         description: 'TA 360-degree rotating Ferris wheel with glass-bottom gondolas that stops riders mid-air to face macabre animatronic scenes of a cursed circus. Special "Midnight Spin" mode reverses direction unexpectedly.',
         image: wheelRide,
         tagline: "The view is killer... literally!",
-        price: '$29.99',
+        price: 29.99,
     },
     {
         id: 3,
@@ -40,7 +40,7 @@ const products = [
         description: `Reaper's Rage" - A floorless coaster with 5 inversions and 95° drops and "Specter's Glide" - A winged coaster with floating mist effects and smooth arcs. This Roller coaster ride is imperative to get the taste of air while going full speed.`,
         image: rollerCoaster,
         tagline: "Thrill & Chill Zone: Dual Coaster Complex",
-        price: '$39.99',
+        price: 39.99,
     },
     {
         id: 4,
@@ -48,13 +48,46 @@ const products = [
         description: 'A high-speed water coaster that twists through ancient aqueducts and crumbling ruins, featuring surprise geyser eruptions, waterfall drenches, and a final 45-degree plunge into a glowing subterranean grotto.   ',
         image: waterSlide,
         tagline: "Stay dry if you dare!",
-        price: '$49.99',
+        price: 49.99,
     },
 ];
 
 function HomePage() {
     const addToCart = useCartStore((state) => state.addToCart);
     const cart = useCartStore((state) => state.cart);
+    const clearCart = useCartStore((state) => state.clearCart);
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        // Only show notification if coming from Stripe success
+        if (queryParams.get('fromStripe') === 'true') {
+            notification.success({
+                message: 'Purchase Successful!',
+                description: 'Your tickets have been booked successfully!',
+                duration: 4.5
+            });
+            
+            // Cleanup
+            window.history.replaceState({}, document.title, "/homepage");
+            clearCart();
+            localStorage.removeItem('preservedCart');
+        }
+    }, [clearCart]);
+
+    
+
+    // Add this to handle browser back/forward navigation
+    useEffect(() => {
+        const handleNavigation = () => {
+            const queryParams = new URLSearchParams(window.location.search);
+            if (queryParams.get('payment') === 'success') {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        };
+
+        window.addEventListener('popstate', handleNavigation);
+        return () => window.removeEventListener('popstate', handleNavigation);
+    }, []);
 
     return (
         <Layout>
@@ -170,6 +203,7 @@ function HomePage() {
                     {products.map((product) => (
                         <Col key={product.id} xs={24} sm={12} md={8} lg={6}>
                             <Card
+                                hoverable
                                 style={{
                                     height: '100%',
                                     display: 'flex',
@@ -252,7 +286,7 @@ function HomePage() {
                                                 margin: '16px 0 0 0',
                                                 fontSize: '1.1rem'
                                             }}>
-                                                {product.price}
+                                                ${product.price}
                                             </p>
                                         </div>
                                     }

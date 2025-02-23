@@ -19,6 +19,18 @@ const useCartStore = create((set) => ({
     cart: state.cart.filter((item) => item.id !== productId),
   })),
   clearCart: () => set({ cart: [] }),
+  setCart: (newCart) => set(() => {
+    localStorage.setItem('cart', JSON.stringify(newCart));  
+    return { cart: newCart };
+  }),
+  persist: (config) => ({
+    ...config,
+    storage: {
+        getItem: (name) => localStorage.getItem(name),
+        setItem: (name, value) => localStorage.setItem(name, value),
+        removeItem: (name) => localStorage.removeItem(name),
+    },
+}),
 }));
 
 export default useCartStore;
