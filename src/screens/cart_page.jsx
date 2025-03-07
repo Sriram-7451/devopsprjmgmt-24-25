@@ -1,12 +1,9 @@
-import React, { useEffect } from 'react';
-import { Layout, List, Button, Card, Typography, Image, Flex, Empty, notification } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Layout, List, Button, Card, Typography, Image, Flex, Empty, notification, Modal, Form, Input, InputNumber, DatePicker } from 'antd';
 import { Link } from 'react-router-dom';
 import useCartStore from '../store/store_cart_items';
-import {
-    HomeOutlined,
-    UserOutlined,
-    ShoppingCartOutlined,
-} from '@ant-design/icons';
+import useBookingStore from '../store/store_booking';
+import { HomeOutlined, UserOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import logoImage from "../assets/waLogo.jpeg";
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -14,27 +11,61 @@ const stripePromise = loadStripe('pk_test_51QvPj5H0mEi2gjEIoypsFkdjuyAAbdqpInM77
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
+const { Item } = Form;
+const { TextArea } = Input;
 
 function CartPage() {
     const { cart, removeFromCart, clearCart, setCart } = useCartStore();
+    const { setBookingDetails } = useBookingStore();
+    const [form] = Form.useForm();
+    const [showBookingForm, setShowBookingForm] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    useEffect(() => {
-        const preservedCart = localStorage.getItem('preservedCart');
-        if (preservedCart) {
-            setCart(JSON.parse(preservedCart));
-            localStorage.removeItem('preservedCart');
+    // Show/hide form modal
+    const showFormModal = () => setShowBookingForm(true);
+    const hideFormModal = () => setShowBookingForm(false);
+
+    // Handle form submission
+    const handleFormSubmit = async (values) => {
+        setIsProcessing(true);
+        try {
+            // 1. Save booking details to store
+            const bookingData = {
+                ...values,
+                date: values.date.format('YYYY-MM-DD'),
+                bookingnumber: `BOOK-${Date.now()}`,
+            };
+            setBookingDetails(bookingData);
+
+            // 2. Prepare selectedAdventures object
+            const selectedAdventures = cart.reduce((acc, item) => {
+                acc[item.name] = [];
+                return acc;
+            }, {});
+
+            // 3. Proceed to Stripe payment
+            await handleStripeCheckout(bookingData, selectedAdventures);
+
+            // Do NOT close the modal here (redirect will handle navigation)
+        } catch (error) {
+            notification.error({ message: 'Payment Error', description: error.message });
+            hideFormModal(); // Close modal only on error
+        } finally {
+            setIsProcessing(false);
         }
-    }, [setCart]);
+    };
 
-    const handleCheckout = async () => {
-        // Preserve cart in localStorage before checkout
-        localStorage.setItem('preservedCart', JSON.stringify(cart));
+    // Handle Stripe checkout
+    const handleStripeCheckout = async (bookingData, selectedAdventures) => {
+        const stripe = await stripePromise;
 
         try {
-            const stripe = await stripePromise;
-            localStorage.setItem('paymentStatus', 'pending');
+            // Save booking details and selectedAdventures to localStorage
+            localStorage.setItem('bookingDetails', JSON.stringify(bookingData));
+            localStorage.setItem('selectedAdventures', JSON.stringify(selectedAdventures));
+            localStorage.setItem('preservedCart', JSON.stringify(cart));
 
-            // 1. Create line items array
+            // Create line items array for Stripe
             const lineItems = cart.map((item, index) => ({
                 [`line_items[${index}][price_data][currency]`]: 'usd',
                 [`line_items[${index}][price_data][product_data][name]`]: item.name,
@@ -45,28 +76,28 @@ function CartPage() {
             const successURL = new URL(`${window.location.origin}/homepage`);
             successURL.searchParams.set('fromStripe', 'true');
 
-            // 2. Create parameters
+            // Create parameters for Stripe
             const params = Object.assign({}, ...lineItems, {
                 'payment_method_types[]': 'card',
                 mode: 'payment',
                 success_url: successURL.toString(),
-                cancel_url: `${window.location.origin}/cart`
+                cancel_url: `${window.location.origin}/cart`,
             });
 
-            // 3. Create URLSearchParams
+            // Create URLSearchParams
             const body = new URLSearchParams();
             for (const [key, value] of Object.entries(params)) {
                 body.append(key, value);
             }
 
-            // 4. Create Stripe session
+            // Create Stripe session
             const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer sk_test_51QvPj5H0mEi2gjEIOLyAFVYqZZMUXLPV1NB2PtrFYjME0aSryfnXFOqALvOIEyfYOzGtH7lmpl844Bpr2Mi6WFWw00RECeeunE`,
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body
+                body,
             });
 
             if (!response.ok) {
@@ -76,28 +107,132 @@ function CartPage() {
 
             const session = await response.json();
 
-            // 5. Redirect to Stripe
+            // Store payment ID in localStorage
+            localStorage.setItem('paymentId', session.payment_intent);
+
+            // Redirect to Stripe
             const result = await stripe.redirectToCheckout({
-                sessionId: session.id
+                sessionId: session.id,
             });
 
             if (result.error) throw result.error;
+            await handleStripeCheckout(bookingData, selectedAdventures);
+            form.resetFields();
 
         } catch (err) {
             // Restore cart on error
-            const savedCart = JSON.parse(localStorage.getItem('preservedCart') || '[]');
-            localStorage.removeItem('paymentStatus');
+            const savedCart = JSON.parse(localStorage.getItem('preservedCart') || []);
             setCart(savedCart);
             localStorage.removeItem('preservedCart');
-            notification.error({
-                message: 'Payment Error',
-                description: err.message
-            });
+            localStorage.removeItem('bookingDetails');
+            localStorage.removeItem('selectedAdventures');
+            localStorage.removeItem('paymentId');
+            throw err;
+
+        } finally {
+            setIsProcessing(false);
         }
+    };
+
+    // Booking form modal component
+    const BookingFormModal = () => (
+        <Modal
+            title="Booking Details"
+            open={showBookingForm}
+            onCancel={hideFormModal}
+            footer={[
+                <Button key="back" onClick={hideFormModal}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isProcessing}
+                    onClick={() => form.submit()}
+                >
+                    {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+                </Button>,
+            ]}
+            centered
+            width={600}
+        >
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleFormSubmit}
+                requiredMark={false}
+            >
+                <Item
+                    label="Full Name"
+                    name="name"
+                    rules={[{ required: true, message: 'Please enter your name' }]}
+                >
+                    <Input placeholder="John Doe" />
+                </Item>
+
+                <Item
+                    label="Email"
+                    name="email"
+                    rules={[{ type: 'email', required: true, message: 'Please enter valid email' }]}
+                >
+                    <Input placeholder="john@example.com" />
+                </Item>
+
+                <Item
+                    label="Contact Number"
+                    name="contact"
+                    rules={[{ required: true, message: 'Please enter contact number' }]}
+                >
+                    <Input placeholder="+1 234 567 890" />
+                </Item>
+
+                <Item
+                    label="Address"
+                    name="address"
+                    rules={[{ required: true, message: 'Please enter address' }]}
+                >
+                    <TextArea rows={3} placeholder="Street address, City, Country" />
+                </Item>
+
+                <Item
+                    label="Booking Date"
+                    name="date"
+                    rules={[{ required: true, message: 'Please select date' }]}
+                >
+                    <DatePicker format="YYYY-MM-DD" style={{ width: '100%' }} />
+                </Item>
+
+                <Item
+                    label="Number of Adults"
+                    name="adult"
+                    rules={[{ required: true, message: 'Please enter number of adults' }]}
+                >
+                    <InputNumber min={1} style={{ width: '100%' }} />
+                </Item>
+
+                <Item
+                    label="Number of Children"
+                    name="children"
+                    rules={[{ required: true, message: 'Please enter number of children' }]}
+                >
+                    <InputNumber min={0} style={{ width: '100%' }} />
+                </Item>
+            </Form>
+        </Modal>
+    );
+
+    // Handle "Buy Now" click
+    const handleCheckout = () => {
+        if (cart.length === 0) {
+            notification.warning({ message: 'Cart Empty', description: 'Please add items to your cart first' });
+            return;
+        }
+        showFormModal();
     };
 
     return (
         <Layout>
+            <BookingFormModal />
             <Header
                 style={{
                     display: 'flex',

@@ -13,6 +13,8 @@ import wheelRide from "../assets/wheelride.jpeg"
 import rollerCoaster from "../assets/rollercoaster.jpg"
 import darkWood from "../assets/darkwood.jpeg"
 import waterSlide from "../assets/waterslide.jpeg"
+import useBookingStore from '../store/store_booking';
+import axios from 'axios';
 
 const { Header, Content } = Layout;
 
@@ -20,6 +22,7 @@ const { Header, Content } = Layout;
 const products = [
     {
         id: 1,
+        displayName: "Darkwood",
         name: 'Darkwood',
         description: 'A suspended dark ride through a decaying Victorian mansion inhabited by spectral figures. Riders navigate secret passages and encounter floating furniture, whispering portraits, and sudden drops into shadowy realms.',
         image: darkWood,
@@ -28,7 +31,8 @@ const products = [
     },
     {
         id: 2,
-        name: 'Wicked Wheel',
+        displayName: "Wicked Wheel",
+        name: 'WickedWheel',
         description: 'TA 360-degree rotating Ferris wheel with glass-bottom gondolas that stops riders mid-air to face macabre animatronic scenes of a cursed circus. Special "Midnight Spin" mode reverses direction unexpectedly.',
         image: wheelRide,
         tagline: "The view is killer... literally!",
@@ -36,7 +40,8 @@ const products = [
     },
     {
         id: 3,
-        name: 'Thrill Chill Park',
+        displayName: "Thrill Chill park",
+        name: 'ThrillChillPark',
         description: `Reaper's Rage" - A floorless coaster with 5 inversions and 95° drops and "Specter's Glide" - A winged coaster with floating mist effects and smooth arcs. This Roller coaster ride is imperative to get the taste of air while going full speed.`,
         image: rollerCoaster,
         tagline: "Thrill & Chill Zone: Dual Coaster Complex",
@@ -44,7 +49,8 @@ const products = [
     },
     {
         id: 4,
-        name: 'Water Amaze',
+        displayName: "Water Amaze",
+        name: 'WaterAmaze',
         description: 'A high-speed water coaster that twists through ancient aqueducts and crumbling ruins, featuring surprise geyser eruptions, waterfall drenches, and a final 45-degree plunge into a glowing subterranean grotto.   ',
         image: waterSlide,
         tagline: "Stay dry if you dare!",
@@ -56,24 +62,102 @@ function HomePage() {
     const addToCart = useCartStore((state) => state.addToCart);
     const cart = useCartStore((state) => state.cart);
     const clearCart = useCartStore((state) => state.clearCart);
+    
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
-        
-        // Only show notification if coming from Stripe success
+    
         if (queryParams.get('fromStripe') === 'true') {
-            notification.success({
-                message: 'Purchase Successful!',
-                description: 'Your tickets have been booked successfully!',
-                duration: 4.5
+            // Retrieve bookingDetails and paymentId from localStorage
+            const bookingDetails = JSON.parse(localStorage.getItem('bookingDetails'));
+            const paymentId = localStorage.getItem('paymentId');
+            const cart = JSON.parse(localStorage.getItem('preservedCart') || []);
+    
+            if (!bookingDetails || !paymentId) {
+                notification.error({
+                    message: 'Error',
+                    description: 'Booking details not found. Please contact support.',
+                    duration: 4.5,
+                });
+                return;
+            }
+    
+            // Set bookingDetails and paymentId in Zustand store
+            useBookingStore.getState().setBookingDetails(bookingDetails);
+            useBookingStore.getState().setPaymentId(paymentId);
+    
+            // Show processing notification
+            notification.info({
+                message: 'Booking Processing',
+                description: 'Your booking is being processed. Please wait...',
+                duration: 0,
+                key: 'processing-notification',
             });
-            
-            // Cleanup
-            window.history.replaceState({}, document.title, "/homepage");
-            clearCart();
-            localStorage.removeItem('preservedCart');
+    
+            const processBooking = async () => {
+                try {
+                    const bookingResponse = await axios.post(
+                        `${process.env.REACT_APP_ENV_ENDPOINT}/bookticket`,
+                        {
+                            userDetails: bookingDetails,
+                            selectedAdventures: cart.reduce((acc, item) => {
+                                acc[item.name] = [`tickets-${item.quantity}`]; // 
+                                return acc;
+                            }, {}),
+                            // paymentId,
+                        }
+                    );
+    
+                    if (bookingResponse.status !== 201) {
+                        throw new Error('Booking failed');
+                    }
+    
+                    notification.success({
+                        message: 'Booking Successful!',
+                        description: `Your booking number is: ${bookingResponse.data.bookingnumber}`,
+                        duration: 4.5,
+                    });
+                } catch (error) {
+                    console.error('Booking error:', error);
+                    notification.error({
+                        message: 'Booking Failed',
+                        description: 'There was a problem with your booking. The transaction is being refunded.',
+                        duration: 0,
+                    });
+    
+                    try {
+                        await axios.post(
+                            `${process.env.REACT_APP_API_ENDPOINT}/initiate-refund`,
+                            { paymentId }
+                        );
+    
+                        notification.info({
+                            message: 'Refund Initiated',
+                            description: 'Your refund has been initiated. Please check your email for updates.',
+                            duration: 4.5,
+                        });
+                    } catch (refundError) {
+                        console.error('Refund failed:', refundError);
+                        notification.error({
+                            message: 'Refund Failed',
+                            description: 'Please contact support for assistance with your refund.',
+                            duration: 0,
+                        });
+                    }
+                } finally {
+                    // Cleanup
+                    notification.destroy('processing-notification');
+                    useBookingStore.getState().clearBookingDetails();
+                    clearCart();
+                    localStorage.removeItem('preservedCart');
+                    localStorage.removeItem('bookingDetails');
+                    localStorage.removeItem('paymentId');
+                    window.history.replaceState({}, document.title, '/homepage');
+                }
+            };
+    
+            processBooking();
         }
     }, [clearCart]);
-
     
 
     // Add this to handle browser back/forward navigation
@@ -222,7 +306,7 @@ function HomePage() {
                                         flex: '0 0 250px' // Fixed image height
                                     }}>
                                         <img
-                                            alt={product.name}
+                                            alt={product.displayName}
                                             src={product.image}
                                             style={{
                                                 width: '100%',
@@ -260,7 +344,7 @@ function HomePage() {
                                         fontSize: '1.2rem',
                                         marginBottom: '8px',
                                         fontWeight: 600
-                                    }}>{product.name}</div>}
+                                    }}>{product.displayName}</div>}
                                     description={
                                         <div style={{
                                             flex: 1,

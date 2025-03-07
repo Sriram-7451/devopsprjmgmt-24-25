@@ -7,6 +7,7 @@ import ForgotPassword from './screens/forgot_password';
 import Errorpage from './screens/error_page';
 import HomePage from './screens/homepage';
 import CartPage from './screens/cart_page';
+import AboutPage from './screens/about_page';
 
 
 function App() {
@@ -15,12 +16,13 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />   
-          <Route path="/homepage" element={<HomePage />} />      
+          <Route path="/login" element={<Login />} />
+          <Route path="/homepage" element={<HomePage />} />
           <Route path="/userRegister" element={<UserRegister />} />
           <Route path="/forgotPassword" element={<ForgotPassword />} />
-          <Route path="/errorland" element={<Errorpage/>} />
+          <Route path="/errorland" element={<Errorpage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </Router>
     </div>
