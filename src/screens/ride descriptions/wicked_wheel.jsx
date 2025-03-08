@@ -151,7 +151,7 @@ const WickedWheelPage = () => {
           "The higher you climb, the harder you'll fall..."
         </Title>
         
-        <Flex gap={16} wrap="wrap" justify="center">
+        {/* <Flex gap={16} wrap="wrap" justify="center">
           <Button 
             type="primary" 
             style={{ 
@@ -178,7 +178,7 @@ const WickedWheelPage = () => {
               🏡 Return to Main Park
             </Button>
           </Link>
-        </Flex>
+        </Flex> */}
       </Flex>
     </div>
   );

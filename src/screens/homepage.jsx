@@ -5,6 +5,7 @@ import {
     HomeOutlined,
     UserOutlined,
     ShoppingCartOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons';
 import logoImage from "../assets/waLogo.jpeg"
 import welcomeImage from "../assets/wawelcomeimage.png"
@@ -24,6 +25,7 @@ const products = [
         id: 1,
         displayName: "Darkwood",
         name: 'Darkwood',
+        path: '/darkwoodDetail',
         description: 'A suspended dark ride through a decaying Victorian mansion inhabited by spectral figures. Riders navigate secret passages and encounter floating furniture, whispering portraits, and sudden drops into shadowy realms.',
         image: darkWood,
         tagline: "Where the walls have eyes... and teeth!",
@@ -33,6 +35,7 @@ const products = [
         id: 2,
         displayName: "Wicked Wheel",
         name: 'WickedWheel',
+        path: '/wickedWheelDetail',
         description: 'TA 360-degree rotating Ferris wheel with glass-bottom gondolas that stops riders mid-air to face macabre animatronic scenes of a cursed circus. Special "Midnight Spin" mode reverses direction unexpectedly.',
         image: wheelRide,
         tagline: "The view is killer... literally!",
@@ -42,6 +45,7 @@ const products = [
         id: 3,
         displayName: "Thrill Chill park",
         name: 'ThrillChillPark',
+        path: '/thrillChillParkDetail',
         description: `Reaper's Rage" - A floorless coaster with 5 inversions and 95° drops and "Specter's Glide" - A winged coaster with floating mist effects and smooth arcs. This Roller coaster ride is imperative to get the taste of air while going full speed.`,
         image: rollerCoaster,
         tagline: "Thrill & Chill Zone: Dual Coaster Complex",
@@ -51,6 +55,7 @@ const products = [
         id: 4,
         displayName: "Water Amaze",
         name: 'WaterAmaze',
+        path: '/waterAmazeDetail',
         description: 'A high-speed water coaster that twists through ancient aqueducts and crumbling ruins, featuring surprise geyser eruptions, waterfall drenches, and a final 45-degree plunge into a glowing subterranean grotto.   ',
         image: waterSlide,
         tagline: "Stay dry if you dare!",
@@ -340,11 +345,28 @@ function HomePage() {
                                 ]}
                             >
                                 <Card.Meta
-                                    title={<div style={{
-                                        fontSize: '1.2rem',
-                                        marginBottom: '8px',
-                                        fontWeight: 600
-                                    }}>{product.displayName}</div>}
+                                    title={<Flex justify="space-between" align="center">
+                                        <div style={{
+                                            fontSize: '1.2rem',
+                                            marginBottom: '8px',
+                                            fontWeight: 600
+                                        }}>
+                                            {product.displayName}
+                                        </div>
+                                        <Link to={product.path}  onClick={() => window.scrollTo(0, 0)}>
+                                            <Button 
+                                                type="text" 
+                                                icon={<InfoCircleOutlined />}
+                                                style={{ 
+                                                    color: '#1890ff',
+                                                    marginLeft: '8px',
+                                                    ':hover': {
+                                                        backgroundColor: 'rgba(24, 144, 255, 0.1)'
+                                                    }
+                                                }}
+                                            />
+                                        </Link>
+                                    </Flex>}
                                     description={
                                         <div style={{
                                             flex: 1,

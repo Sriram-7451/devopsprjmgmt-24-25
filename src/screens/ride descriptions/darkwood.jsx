@@ -161,7 +161,7 @@ const DarkwoodPage = () => {
           "The House and the inmates remember... will you escape their grasp?"
         </Title>
         
-        <Flex gap={16} wrap="wrap" justify="center">
+        {/* <Flex gap={16} wrap="wrap" justify="center">
           <Button 
             type="primary" 
             danger 
@@ -189,7 +189,7 @@ const DarkwoodPage = () => {
               🏡 Return to Main Park
             </Button>
           </Link>
-        </Flex>
+        </Flex> */}
       </Flex>
     </div>
   );

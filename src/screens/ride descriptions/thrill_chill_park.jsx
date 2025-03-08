@@ -162,7 +162,7 @@ const ThrillChillParkPage = () => {
           "The cold never bothered us... but it should bother YOU!"
         </Title>
         
-        <Flex gap={16} wrap="wrap" justify="center">
+        {/* <Flex gap={16} wrap="wrap" justify="center">
           <Button 
             type="primary" 
             style={{ 
@@ -189,7 +189,7 @@ const ThrillChillParkPage = () => {
               🏡 Return to Main Park
             </Button>
           </Link>
-        </Flex>
+        </Flex> */}
       </Flex>
     </div>
   );

@@ -161,7 +161,7 @@ const WaterAmazePage = () => {
           "The depths remember... will you surface unchanged?"
         </Title>
         
-        <Flex gap={16} wrap="wrap" justify="center">
+        {/* <Flex gap={16} wrap="wrap" justify="center">
           <Button 
             type="primary" 
             style={{ 
@@ -188,7 +188,7 @@ const WaterAmazePage = () => {
               🏡 Return to Main Park
             </Button>
           </Link>
-        </Flex>
+        </Flex> */}
       </Flex>
     </div>
   );
