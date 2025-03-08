@@ -8,6 +8,10 @@ import Errorpage from './screens/error_page';
 import HomePage from './screens/homepage';
 import CartPage from './screens/cart_page';
 import AboutPage from './screens/about_page';
+import DarkwoodPage from './screens/ride descriptions/darkwood';
+import WickedWheelPage from './screens/ride descriptions/wicked_wheel';
+import WaterAmazePage from './screens/ride descriptions/water_amaze';
+import ThrillChillParkPage from './screens/ride descriptions/thrill_chill_park';
 
 
 function App() {
@@ -23,6 +27,10 @@ function App() {
           <Route path="/errorland" element={<Errorpage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/darkwoodDetail" element={<DarkwoodPage />} />
+          <Route path="/wickedWheelDetail" element={<WickedWheelPage />} />
+          <Route path="/waterAmazeDetail" element={<WaterAmazePage />} />
+          <Route path="/thrillChillParkDetail" element={<ThrillChillParkPage />} />
         </Routes>
       </Router>
     </div>
