@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Layout, Card, Row, Col, Button, Image, Flex, notification } from 'antd';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState} from 'react';
+import { Layout, Card, Row, Col, Button, Image, Flex, notification, Modal, Spin } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-    HomeOutlined,
     UserOutlined,
     ShoppingCartOutlined,
     InfoCircleOutlined,
@@ -67,6 +66,9 @@ function HomePage() {
     const addToCart = useCartStore((state) => state.addToCart);
     const cart = useCartStore((state) => state.cart);
     const clearCart = useCartStore((state) => state.clearCart);
+    const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         console.log("log in another useeffect", cart.length)
@@ -178,8 +180,58 @@ function HomePage() {
         return () => window.removeEventListener('popstate', handleNavigation);
     }, []);
 
+    const handleLogout = async () => {
+        setIsLogoutModalVisible(true); // Show logout modal
+        setIsLoggingOut(true); // Start loading spinner
+
+        try {
+            const response = await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/logout`);
+
+            if (response.status === 200 || response.status === 201) {
+                // Show success notification
+                notification.success({
+                    message: 'Logout Successful',
+                    description: 'You have been logged out successfully.',
+                    placement: 'topRight',
+                });
+
+                // Redirect to home page
+                navigate('/');
+            } else {
+                throw new Error('Logout failed');
+            }
+        } catch (error) {
+            // Show error notification
+            notification.error({
+                message: 'Logout Failed',
+                description: 'There was a problem logging out. Please try again.',
+                placement: 'topRight',
+            });
+        } finally {
+            setIsLoggingOut(false); 
+            setIsLogoutModalVisible(false); 
+        }
+    };
+
+    const LogoutModal = () => (
+        <Modal
+            title="Logging Out"
+            open={isLogoutModalVisible}
+            onCancel={() => setIsLogoutModalVisible(false)}
+            footer={null} 
+            closable={false} 
+            centered
+        >
+            <Flex justify="center" align="center" gap="middle">
+                <Spin size="large" /> 
+                <span>Logging you off...</span>
+            </Flex>
+        </Modal>
+    );
+
     return (
         <Layout>
+            <LogoutModal />
             <Header
                 style={{
                     display: 'flex',
@@ -215,11 +267,14 @@ function HomePage() {
                     <Link to="/userBookedRides">
                         <Button icon={<UserOutlined />}>My Rides</Button>
                     </Link>
-                    <Link to="/">
-                        <Button type="primary" style={{ backgroundColor: "red" }} icon={<LogoutOutlined />}>
-                            Logout
-                        </Button>
-                    </Link>
+                    <Button
+                        type="primary"
+                        style={{ backgroundColor: "red", marginTop: "15px" }}
+                        icon={<LogoutOutlined />}
+                        onClick={handleLogout}
+                    >
+                        Logout
+                    </Button>
                 </Flex>
             </Header>
 

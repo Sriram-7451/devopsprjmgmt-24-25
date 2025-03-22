@@ -5,7 +5,6 @@ import useUserStore from '../store/store_user';
 import { Link } from 'react-router-dom';
 import {
     HomeOutlined,
-    UserOutlined,
     LogoutOutlined
 } from '@ant-design/icons';
 import darkWood from "../assets/darkwood.jpeg";
