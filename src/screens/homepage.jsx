@@ -17,6 +17,7 @@ import waterSlide from "../assets/waterslide.jpeg"
 import useBookingStore from '../store/store_booking';
 import axios from 'axios';
 import useAuth from '../hooks/use_jwt_auth';
+import useUserStore from '../store/store_user';
 
 const { Header, Content } = Layout;
 
@@ -71,15 +72,17 @@ function HomePage() {
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const navigate = useNavigate();
+    const userType = useUserStore.getState().userType; 
 
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
-
+    
         if (queryParams.get('fromStripe') === 'true') {
             const bookingDetails = JSON.parse(localStorage.getItem('bookingDetails'));
             const paymentId = localStorage.getItem('paymentId');
-            const cart = JSON.parse(localStorage.getItem('preservedCart') || []);
-
+            const cart = JSON.parse(localStorage.getItem('preservedCart') || '[]');
+            // Get userType from store
+    
             if (!bookingDetails || !paymentId) {
                 notification.error({
                     message: 'Error',
@@ -88,23 +91,26 @@ function HomePage() {
                 });
                 return;
             }
-
+    
             useBookingStore.getState().setBookingDetails(bookingDetails);
             useBookingStore.getState().setPaymentId(paymentId);
-
+    
             notification.info({
                 message: 'Booking Processing',
                 description: 'Your booking is being processed. Please wait...',
                 duration: 0,
                 key: 'processing-notification',
             });
-
-            console.log("Cart items length", cart.length)
-
+    
             const processBooking = async () => {
                 try {
+                    // Determine endpoint based on userType
+                    const endpoint = userType === "Admin" 
+                        ? `${process.env.REACT_APP_ENV_ENDPOINT}/admin/bookticket` 
+                        : `${process.env.REACT_APP_ENV_ENDPOINT}/bookticket`
+    
                     const bookingResponse = await axios.post(
-                        `${process.env.REACT_APP_ENV_ENDPOINT}/bookticket`,
+                        endpoint, // Use the conditional endpoint
                         {
                             userDetails: bookingDetails,
                             selectedAdventures: cart.reduce((acc, item) => {
@@ -113,11 +119,11 @@ function HomePage() {
                             }, {}),
                         }
                     );
-
+    
                     if (bookingResponse.status !== 201) {
                         throw new Error('Booking failed');
                     }
-
+    
                     notification.success({
                         message: 'Booking Successful!',
                         description: `Your booking number is: ${bookingResponse.data.bookingnumber}`,
@@ -131,13 +137,12 @@ function HomePage() {
                         description: 'There was a problem with your booking. The transaction is being refunded.',
                         duration: 0,
                     });
-
+    
                     try {
                         await axios.post(
                             `${process.env.REACT_APP_API_ENDPOINT}/initiate-refund`,
                             { paymentId }
                         );
-
                         notification.info({
                             message: 'Refund Initiated',
                             description: 'Your refund has been initiated. Please check your email for updates.',
@@ -161,7 +166,7 @@ function HomePage() {
                     window.history.replaceState({}, document.title, '/homepage');
                 }
             };
-
+    
             processBooking();
         }
     }, [clearCart]);
@@ -262,8 +267,8 @@ function HomePage() {
                     <Link to="/about">
                         <Button icon={<UserOutlined />}>About</Button>
                     </Link>
-                    <Link to="/userBookedRides">
-                        <Button icon={<UserOutlined />}>My Rides</Button>
+                    <Link to= {userType === "Admin" ? "/adminBookedList" : "/userBookedRides"}>
+                        <Button icon={<UserOutlined />}>{userType === "Admin" ? "My Rides" : "Manage Rides"}</Button> 
                     </Link>
                     <Button
                         type="primary"
