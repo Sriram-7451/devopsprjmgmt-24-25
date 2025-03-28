@@ -1,19 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, List, Modal, notification, Typography, Badge, Layout, Flex } from 'antd';
+import { Card, Button, List, Modal, notification, Typography, Badge, Layout, Flex, Form, Input, InputNumber, DatePicker } from 'antd';
 import { Link } from 'react-router-dom';
 import { HomeOutlined } from '@ant-design/icons';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import useAuth from '../hooks/use_jwt_auth';
+import moment from 'moment';
+
 const { Header, Content } = Layout;
 const { Text } = Typography;
+const { Item } = Form;
+const { TextArea } = Input;
 
 function AdminBookingsList() {
     useAuth();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
     const [currentBooking, setCurrentBooking] = useState(null);
+    const [form] = Form.useForm();
 
     useEffect(() => {
         fetchBookings();
@@ -34,7 +40,6 @@ function AdminBookingsList() {
             });
         });
         
-        // Filter out bookings with no rides
         return Object.values(grouped).filter(booking => booking.rides.length > 0);
     };
 
@@ -45,6 +50,20 @@ function AdminBookingsList() {
     const handleDelete = (booking) => {
         setCurrentBooking(booking);
         setDeleteModalVisible(true);
+    };
+
+    const handleEdit = (booking) => {
+        setCurrentBooking(booking);
+        form.setFieldsValue({
+            name: booking.name,
+            email: booking.email,
+            contact: booking.contact,
+            address: booking.address,
+            date: moment(booking.date),
+            adult: booking.adult,
+            children: booking.children
+        });
+        setEditModalVisible(true);
     };
 
     const confirmDelete = async () => {
@@ -69,7 +88,6 @@ function AdminBookingsList() {
                     placement: 'topRight'
                 });
                 
-                // Always update state based on server response
                 setBookings(prevBookings => 
                     prevBookings.filter(b => b.bookingnumber !== currentBooking.bookingnumber)
                 );
@@ -85,10 +103,51 @@ function AdminBookingsList() {
             setDeleteModalVisible(false);
         }
     };
-    
-    // And modify fetchBookings to maintain loading state properly:
+
+    const handleEditSubmit = async () => {
+        try {
+            const values = await form.validateFields();
+            
+            const response = await axios.post(
+                `${process.env.REACT_APP_ENV_ENDPOINT}/admin/editticket`,
+                {
+                    user: {
+                        name: values.name,
+                        email: values.email,
+                        address: values.address,
+                        contact: values.contact,
+                        date: values.date.format('YYYY-MM-DD'),
+                        adult: values.adult,
+                        children: values.children
+                    },
+                    booking: {
+                        bookingnumber: currentBooking.bookingnumber
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                notification.success({
+                    message: 'Success',
+                    description: 'Booking updated successfully',
+                    placement: 'topRight'
+                });
+                
+                // Refresh bookings list
+                await fetchBookings();
+                setEditModalVisible(false);
+            }
+        } catch (error) {
+            notification.error({
+                message: 'Error',
+                description: error.response?.data?.message || 'Update failed',
+                placement: 'topRight'
+            });
+        }
+    };
+
     const fetchBookings = async () => {
-        setLoading(true); // Ensure loading starts
+        setLoading(true);
         try {
             const response = await axios.post(
                 `${process.env.REACT_APP_ENV_ENDPOINT}/admin/mybookings`,
@@ -104,7 +163,7 @@ function AdminBookingsList() {
                 placement: 'topRight'
             });
         } finally {
-            setLoading(false); // Only stop loading when everything is done
+            setLoading(false);
         }
     };
 
@@ -152,7 +211,7 @@ function AdminBookingsList() {
                                     }}>
                                         <div style={{ flex: 2 }}>
                                             <Text strong style={{ display: 'block', marginBottom: '4px' }}>
-                                                {booking.email}
+                                                {booking.name || booking.email}
                                             </Text>
                                             <Text type="secondary" style={{ display: 'block', marginBottom: '8px' }}>
                                                 Booking #: {booking.bookingnumber}
@@ -160,6 +219,10 @@ function AdminBookingsList() {
                                             <div style={{ marginBottom: '8px' }}>
                                                 <Text strong>Date: </Text>
                                                 <Text>{new Date(booking.date).toLocaleDateString()}</Text>
+                                            </div>
+                                            <div style={{ marginBottom: '8px' }}>
+                                                <Text strong>Visitors: </Text>
+                                                <Text>{booking.adult} adults, {booking.children} children</Text>
                                             </div>
                                             <div>
                                                 <Text strong>Rides: </Text>
@@ -187,7 +250,7 @@ function AdminBookingsList() {
                                                 <Button
                                                     icon={<EditOutlined />}
                                                     style={{ marginRight: '8px' }}
-                                                    onClick={() => console.log('Edit booking:', booking.bookingnumber)}
+                                                    onClick={() => handleEdit(booking)}
                                                 />
                                                 <Button
                                                     icon={<DeleteOutlined />}
@@ -201,6 +264,8 @@ function AdminBookingsList() {
                             </List.Item>
                         )}
                     />
+
+                    {/* Delete Confirmation Modal */}
                     <Modal
                         title="Confirm Delete"
                         open={deleteModalVisible}
@@ -214,6 +279,98 @@ function AdminBookingsList() {
                         <p><strong>Booking #:</strong> {currentBooking?.bookingnumber}</p>
                         <p><strong>Email:</strong> {currentBooking?.email}</p>
                         <p><strong>Total Tickets:</strong> {currentBooking ? calculateTotalTickets(currentBooking) : 0}</p>
+                    </Modal>
+
+                    {/* Edit Booking Modal */}
+                    <Modal
+                        title="Edit Booking"
+                        open={editModalVisible}
+                        onOk={handleEditSubmit}
+                        onCancel={() => setEditModalVisible(false)}
+                        okText="Save Changes"
+                        cancelText="Cancel"
+                        width={600}
+                    >
+                        <Form
+                            form={form}
+                            layout="vertical"
+                        >
+                            <Item
+                                label="Full Name"
+                                name="name"
+                                rules={[{ required: true, message: 'Please enter name' }]}
+                            >
+                                <Input placeholder="John Doe" />
+                            </Item>
+
+                            <Item
+                                label="Email"
+                                name="email"
+                                rules={[{ type: 'email', required: true, message: 'Please enter valid email' }]}
+                            >
+                                <Input placeholder="john@example.com" />
+                            </Item>
+
+                            <Item
+                                label="Contact Number"
+                                name="contact"
+                                rules={[
+                                    { required: true, message: 'Please enter contact number' },
+                                    {
+                                        pattern: /^[0-9]+$/,
+                                        message: 'Please enter numbers only'
+                                    },
+                                    {
+                                        min: 10,
+                                        message: 'Number must be at least 10 digits'
+                                    }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="1234567890"
+                                    type="tel"
+                                    maxLength={15}
+                                />
+                            </Item>
+
+                            <Item
+                                label="Address"
+                                name="address"
+                                rules={[{ required: true, message: 'Please enter address' }]}
+                            >
+                                <TextArea rows={3} placeholder="Street address, City, Country" />
+                            </Item>
+
+                            <Item
+                                label="Booking Date"
+                                name="date"
+                                rules={[{ required: true, message: 'Please select date' }]}
+                            >
+                                <DatePicker
+                                    format="YYYY-MM-DD"
+                                    style={{ width: '100%' }}
+                                    disabledDate={(current) => {
+                                        return current && current < moment().endOf('day');
+                                    }}
+                                />
+                            </Item>
+
+                            <Item
+                                label="Number of Adults"
+                                name="adult"
+                                rules={[{ required: true, message: 'Please enter number of adults' }]}
+                            >
+                                <InputNumber min={1} style={{ width: '100%' }} />
+                            </Item>
+
+                            <Item
+                                label="Number of Children"
+                                name="children"
+                                rules={[{ required: true, message: 'Please enter number of children' }]}
+                            >
+                                <InputNumber min={0} style={{ width: '100%' }} />
+                            </Item>
+                        </Form>
                     </Modal>
                 </Content>
             </Layout>
