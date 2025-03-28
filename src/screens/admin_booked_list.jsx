@@ -19,26 +19,6 @@ function AdminBookingsList() {
         fetchBookings();
     }, []);
 
-    const fetchBookings = async () => {
-        try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_ENV_ENDPOINT}/admin/mybookings`,
-                {
-                    email: "support@wednesdaysadventures.com"
-                }
-            );      // Group bookings by bookingnumber
-            const groupedBookings = groupByBookingNumber(response.data.bookings);
-            setBookings(groupedBookings);
-        } catch (error) {
-            notification.error({
-                message: 'Failed to load bookings',
-                placement: 'topRight'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const groupByBookingNumber = (bookingsArray) => {
         const grouped = {};
         bookingsArray.forEach(booking => {
@@ -53,7 +33,9 @@ function AdminBookingsList() {
                 tickets: parseInt(booking.adventure.match(/tickets-(\d+)/)[1])
             });
         });
-        return Object.values(grouped);
+        
+        // Filter out bookings with no rides
+        return Object.values(grouped).filter(booking => booking.rides.length > 0);
     };
 
     const calculateTotalTickets = (booking) => {
@@ -66,26 +48,31 @@ function AdminBookingsList() {
     };
 
     const confirmDelete = async () => {
+        setLoading(true);
         try {
             const response = await axios.delete(
                 `${process.env.REACT_APP_ENV_ENDPOINT}/admin/deletebooking`,
                 {
                     data: {
-                        bookingnumber: currentBooking.bookingnumber 
+                        bookingnumber: currentBooking.bookingnumber
                     },
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 }
             );
-
+    
             if (response.status === 200) {
                 notification.success({
                     message: 'Success',
                     description: `Booking ${currentBooking.bookingnumber} deleted`,
                     placement: 'topRight'
                 });
-                fetchBookings();
+                
+                // Always update state based on server response
+                setBookings(prevBookings => 
+                    prevBookings.filter(b => b.bookingnumber !== currentBooking.bookingnumber)
+                );
             }
         } catch (error) {
             notification.error({
@@ -94,7 +81,30 @@ function AdminBookingsList() {
                 placement: 'topRight'
             });
         } finally {
+            setLoading(false);
             setDeleteModalVisible(false);
+        }
+    };
+    
+    // And modify fetchBookings to maintain loading state properly:
+    const fetchBookings = async () => {
+        setLoading(true); // Ensure loading starts
+        try {
+            const response = await axios.post(
+                `${process.env.REACT_APP_ENV_ENDPOINT}/admin/mybookings`,
+                {
+                    email: "support@wednesdaysadventures.com"
+                }
+            );
+            const groupedBookings = groupByBookingNumber(response.data.bookings);
+            setBookings(groupedBookings);
+        } catch (error) {
+            notification.error({
+                message: 'Couldnt Find Any Records',
+                placement: 'topRight'
+            });
+        } finally {
+            setLoading(false); // Only stop loading when everything is done
         }
     };
 

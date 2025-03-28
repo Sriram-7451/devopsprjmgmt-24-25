@@ -7,6 +7,7 @@ import { HomeOutlined, UserOutlined } from '@ant-design/icons';
 import logoImage from "../assets/waLogo.jpeg";
 import { loadStripe } from '@stripe/stripe-js';
 import useAuth from '../hooks/use_jwt_auth';
+import moment from 'moment';
 
 const stripePromise = loadStripe('pk_test_51QvPj5H0mEi2gjEIoypsFkdjuyAAbdqpInM77jN9kftEhsHkNje7mBvPByYXkFrd3M4oQWKgq9EpmF2cshE158rS00x3z5Jf45');
 
@@ -225,9 +226,23 @@ function CartPage() {
                 <Item
                     label="Contact Number"
                     name="contact"
-                    rules={[{ required: true, message: 'Please enter contact number' }]}
+                    rules={[
+                        { required: true, message: 'Please enter contact number' },
+                        {
+                            pattern: /^[0-9]+$/,
+                            message: 'Please enter numbers only'
+                        },
+                        {
+                            min: 10,
+                            message: 'Number must be at least 10 digits'
+                        }
+                    ]}
                 >
-                    <Input placeholder="+1 234 567 890" />
+                    <Input
+                        placeholder="1234567890"
+                        type="tel"
+                        maxLength={15}
+                    />
                 </Item>
 
                 <Item
@@ -243,7 +258,13 @@ function CartPage() {
                     name="date"
                     rules={[{ required: true, message: 'Please select date' }]}
                 >
-                    <DatePicker format="YYYY-MM-DD" style={{ width: '100%' }} />
+                    <DatePicker
+                        format="YYYY-MM-DD"
+                        style={{ width: '100%' }}
+                        disabledDate={(current) => {
+                            return current && current < moment().endOf('day');
+                        }}
+                    />
                 </Item>
 
                 <Item

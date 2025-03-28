@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Card, Row, Col, Button, Image, Flex, notification, Modal, Spin } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -72,17 +72,17 @@ function HomePage() {
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const navigate = useNavigate();
-    const userType = useUserStore.getState().userType; 
+    const userType = useUserStore.getState().userType;
 
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
-    
+
         if (queryParams.get('fromStripe') === 'true') {
             const bookingDetails = JSON.parse(localStorage.getItem('bookingDetails'));
             const paymentId = localStorage.getItem('paymentId');
             const cart = JSON.parse(localStorage.getItem('preservedCart') || '[]');
             // Get userType from store
-    
+
             if (!bookingDetails || !paymentId) {
                 notification.error({
                     message: 'Error',
@@ -91,24 +91,24 @@ function HomePage() {
                 });
                 return;
             }
-    
+
             useBookingStore.getState().setBookingDetails(bookingDetails);
             useBookingStore.getState().setPaymentId(paymentId);
-    
+
             notification.info({
                 message: 'Booking Processing',
                 description: 'Your booking is being processed. Please wait...',
                 duration: 0,
                 key: 'processing-notification',
             });
-    
+
             const processBooking = async () => {
                 try {
                     // Determine endpoint based on userType
-                    const endpoint = userType === "Admin" 
-                        ? `${process.env.REACT_APP_ENV_ENDPOINT}/admin/bookticket` 
+                    const endpoint = userType === "Admin"
+                        ? `${process.env.REACT_APP_ENV_ENDPOINT}/admin/bookticket`
                         : `${process.env.REACT_APP_ENV_ENDPOINT}/bookticket`
-    
+
                     const bookingResponse = await axios.post(
                         endpoint, // Use the conditional endpoint
                         {
@@ -119,11 +119,11 @@ function HomePage() {
                             }, {}),
                         }
                     );
-    
+
                     if (bookingResponse.status !== 201) {
                         throw new Error('Booking failed');
                     }
-    
+
                     notification.success({
                         message: 'Booking Successful!',
                         description: `Your booking number is: ${bookingResponse.data.bookingnumber}`,
@@ -137,7 +137,7 @@ function HomePage() {
                         description: 'There was a problem with your booking. The transaction is being refunded.',
                         duration: 0,
                     });
-    
+
                     try {
                         await axios.post(
                             `${process.env.REACT_APP_API_ENDPOINT}/initiate-refund`,
@@ -166,7 +166,7 @@ function HomePage() {
                     window.history.replaceState({}, document.title, '/homepage');
                 }
             };
-    
+
             processBooking();
         }
     }, [clearCart]);
@@ -211,8 +211,8 @@ function HomePage() {
                 placement: 'topRight',
             });
         } finally {
-            setIsLoggingOut(false); 
-            setIsLogoutModalVisible(false); 
+            setIsLoggingOut(false);
+            setIsLogoutModalVisible(false);
         }
     };
 
@@ -221,12 +221,12 @@ function HomePage() {
             title="Logging Out"
             open={isLogoutModalVisible}
             onCancel={() => setIsLogoutModalVisible(false)}
-            footer={null} 
-            closable={false} 
+            footer={null}
+            closable={false}
             centered
         >
             <Flex justify="center" align="center" gap="middle">
-                <Spin size="large" /> 
+                <Spin size="large" />
                 <span>Logging you off...</span>
             </Flex>
         </Modal>
@@ -267,8 +267,8 @@ function HomePage() {
                     <Link to="/about">
                         <Button icon={<UserOutlined />}>About</Button>
                     </Link>
-                    <Link to= {userType === "Admin" ? "/adminBookedList" : "/userBookedRides"}>
-                   { userType === "Admin" ? <Button icon={<UserOutlined />}>Manage Bookings</Button> : <Button icon={<UserOutlined />}>My Rides</Button>}
+                    <Link to={userType === "Admin" ? "/adminBookedList" : "/userBookedRides"}>
+                        {userType === "Admin" ? <Button>Manage Bookings</Button> : <Button >My Rides</Button>}
                     </Link>
                     <Button
                         type="primary"
@@ -277,7 +277,7 @@ function HomePage() {
                         onClick={() => {
                             handleLogout(); // Call the function
                             localStorage.setItem("token", null); // Set token to null
-                          }}                    >
+                        }}                    >
                         Logout
                     </Button>
                 </Flex>
