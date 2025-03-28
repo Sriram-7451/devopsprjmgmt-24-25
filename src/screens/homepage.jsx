@@ -268,7 +268,7 @@ function HomePage() {
                         <Button icon={<UserOutlined />}>About</Button>
                     </Link>
                     <Link to= {userType === "Admin" ? "/adminBookedList" : "/userBookedRides"}>
-                        <Button icon={<UserOutlined />}>{userType === "Admin" ? "My Rides" : "Manage Rides"}</Button> 
+                   { userType === "Admin" ? <Button icon={<UserOutlined />}>Manage Bookings</Button> : <Button icon={<UserOutlined />}>My Rides</Button>}
                     </Link>
                     <Button
                         type="primary"

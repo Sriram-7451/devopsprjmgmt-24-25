@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Button, List, Modal, notification, Typography, Badge, Layout, Flex } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
-import { HomeOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
+import { HomeOutlined } from '@ant-design/icons';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import useAuth from '../hooks/use_jwt_auth';
 const { Header, Content } = Layout;
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function AdminBookingsList() {
+    useAuth();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [currentBooking, setCurrentBooking] = useState(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         fetchBookings();
@@ -35,22 +36,6 @@ function AdminBookingsList() {
             });
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            await axios.post(`${process.env.REACT_APP_ENV_ENDPOINT}/logout`);
-            notification.success({
-                message: 'Logout Successful',
-                placement: 'topRight',
-            });
-            navigate('/');
-        } catch (error) {
-            notification.error({
-                message: 'Logout Failed',
-                placement: 'topRight',
-            });
         }
     };
 
@@ -86,7 +71,7 @@ function AdminBookingsList() {
                 `${process.env.REACT_APP_ENV_ENDPOINT}/admin/deletebooking`,
                 {
                     data: {
-                        bookingnumber: currentBooking.bookingnumber // Send directly in the body
+                        bookingnumber: currentBooking.bookingnumber 
                     },
                     headers: {
                         'Content-Type': 'application/json'
@@ -137,16 +122,6 @@ function AdminBookingsList() {
                         <Link to="/homepage">
                             <Button icon={<HomeOutlined />}>Home</Button>
                         </Link>
-                        <Button
-                            type="primary"
-                            style={{ backgroundColor: "red", marginTop: "15px" }}
-                            icon={<LogoutOutlined />}
-                            onClick={() => {
-                                handleLogout(); // Call the function
-                                localStorage.setItem("token", null); // Set token to null
-                            }}                    >
-                            Logout
-                        </Button>
                     </Flex>
                 </Header>
                 <Content style={{ padding: '20px', marginTop: '64px' }}>
